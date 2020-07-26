@@ -1,9 +1,9 @@
 let DB_URI = 'postgresql://';
 
 if (process.env.NODE_ENV === 'test') {
-  DB_URI = `${DB_URI}/goals_test`;
+  DB_URI = `${DB_URI}/studygroup_test`;
 } else {
-  DB_URI = process.env.DATABASE_URL || `${DB_URI}/goals`
+  DB_URI = process.env.DATABASE_URL || `${DB_URI}/studygroup`
 }
 
 module.exports = { DB_URI };
