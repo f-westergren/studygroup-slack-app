@@ -1,0 +1,6 @@
+CREATE TABLE goals (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  goal TEXT NOT NULL,
+  date DATE NOT NULL
+);
