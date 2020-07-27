@@ -51,11 +51,30 @@ router.post("/goals", checkSlackVerification, async (req, res) => {
   }
 })
 
-// router.post("/exercise", async (req, res) => {
-//   try {
+router.post("/exercise", checkSlackVerification, async (req, res) => {
+  const date = new Date();
+  try {
+    const { channel_id, text } = req.body
+    
+    // Get params from req.body.text and separate url from description.
+    const params = text.split(' ')
+    const url = params[0]
+    params.shift() // Remove url from params.
+    let description = params.join(' ')
 
-//   }
-// })
+    console.log('HERE', url, channel_id, description, date)
+    
+    await db.query(
+      `INSERT INTO exercises (url, channel_id, description, date)
+      VALUES ($1, $2, $3, $4)
+      RETURNING url`,
+      [url, channel_id, description, date])
+    
+    return res.send(`Added ${url} to this week's exercises.`)
+  } catch (error) {
+    throw new ExpressError(error, 400)
+  }
+})
 
 module.exports = router
 

@@ -18,5 +18,8 @@ create TABLE exercises (
   id SERIAL PRIMARY KEY,
   channel_id TEXT NOT NULL REFERENCES channels,
   url TEXT NOT NULL,
+  description TEXT,
   date DATE NOT NULL
-)
+);
+
+INSERT INTO channels (id) VALUES ('C017R2H2K0T');
