@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS goals;
+DROP TABLE IF EXISTS exercises;
 DROP TABLE IF EXISTS channels;
 
 CREATE TABLE channels (
@@ -12,3 +13,10 @@ CREATE TABLE goals (
   goal TEXT NOT NULL,
   date DATE NOT NULL
 );
+
+create TABLE exercises (
+  id SERIAL PRIMARY KEY,
+  channel_id TEXT NOT NULL REFERENCES channels,
+  url TEXT NOT NULL,
+  date DATE NOT NULL
+)
