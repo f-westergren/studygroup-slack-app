@@ -25,3 +25,11 @@ function rawBodySaver (req, res, buf, encoding) {
     req.rawBody = buf.toString(encoding || 'utf8')
   }
 }
+
+app.use(function(err, req, res, next) {
+  res.status(err.status || 500);
+
+  return res.json({
+    error: err
+  });
+});
