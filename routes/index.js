@@ -3,60 +3,39 @@ const ExpressError = require('../expressError');
 const db = require("../db");
 const router = new express.Router();
 const moment = require('moment');
-const crypto = require('crypto');
 
 // Users_ids
 const users = require('../users')
-const signingSecret = require('../secrets')
 
-// router.post("/create", async (req, res) => {
-   
-// })
+const checkSlackVerification = require('../middleware/slackVerification')
 
-router.post("/goal", async (req, res) => {
+router.post("/goal", checkSlackVerification, async (req, res) => {
+  const date = new Date();
+  const { user_id, text, channel_id } = req.body;
 
-  const timestamp = req.headers['x-slack-request-timestamp']
-  const time = new Date().getTime
+  try {
+    await db.query(
+      `INSERT INTO goals (name, channel_id, goal, date)
+      VALUES ($1, $2, $3, $4)`,
+      [users[user_id], channel_id, text, date]
+    )
 
-  // The request timestamp is more than five minutes from local time.
-  // It could be a replay attack, so let's ignore it.
-  if (Math.abs(time - timestamp) > 60 * 5) {
-    return undefined;
+    // Get this week's goals only. 
+    const startOfWeek = moment().startOf('week').toDate();
+    const result = await db.query(
+      `SELECT name, goal FROM goals
+      WHERE date >=$1 AND channel_id=$2`, [startOfWeek, channel_id]
+    )
+
+    let goals = createGoalMarkdown(result.rows)
+    return res.send(goals)
+
+  } catch (error) {
+    throw new ExpressError(error, 400)
   }
-
-  // Verification
-  const sigBaseString = 'v0:' + timestamp + ':' + req.rawBody
-  const hmac = 'v0=' + crypto.createHmac('sha256', signingSecret).update(sigBaseString).digest('hex')
-
-  if (hmac === req.headers['x-slack-signature']) {
-    const date = new Date();
-    const { user_id, text, channel_id } = req.body;
-
-    try {
-      await db.query(
-        `INSERT INTO goals (name, channel_id, goal, date)
-        VALUES ($1, $2, $3, $4)`,
-        [users[user_id], channel_id, text, date]
-      )
-  
-      // Get this week's goals only. 
-      const startOfWeek = moment().startOf('week').toDate();
-      const result = await db.query(
-        `SELECT name, goal FROM goals
-        WHERE date >=$1 AND channel_id=$2`, [startOfWeek, channel_id]
-      )
-  
-      let goals = createGoalMarkdown(result.rows)
-      return res.send(goals)
-  
-    } catch (error) {
-      throw new ExpressError(error, 400)
-    }
-  }
-
 })
 
-router.post("/goals", async (req, res) => {
+router.post("/goals", checkSlackVerification, async (req, res) => {
   try {
     const startOfWeek = moment().startOf('week').toDate();
     const result = await db.query(
@@ -72,7 +51,11 @@ router.post("/goals", async (req, res) => {
   }
 })
 
+// router.post("/exercise", async (req, res) => {
+//   try {
 
+//   }
+// })
 
 module.exports = router
 
