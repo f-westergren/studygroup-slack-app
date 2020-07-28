@@ -2,6 +2,9 @@ const signingSecret = require('../secrets')
 const crypto = require('crypto');
 const ExpressError = require('../expressError')
 
+// Users_ids
+const users = require('../users')
+
 const checkSlackVerification = (req, res, next) => {
   const timestamp = req.headers['x-slack-request-timestamp']
   const time = new Date().getTime
@@ -17,8 +20,8 @@ const checkSlackVerification = (req, res, next) => {
     const sigBaseString = 'v0:' + timestamp + ':' + req.rawBody
     const hmac = 'v0=' + crypto.createHmac('sha256', signingSecret).update(sigBaseString).digest('hex')
 
-    // If signatures match, return next.
-    if (hmac === req.headers['x-slack-signature']) {
+    // If signatures match, and user is allowed access, return next.
+    if (hmac === req.headers['x-slack-signature'] && req.body.user_id in users) {
       return next()
     } else {
       throw new ExpressError("Unauthorized", 401)
@@ -27,6 +30,5 @@ const checkSlackVerification = (req, res, next) => {
     return next(error)
   }
 }
-
 
 module.exports = checkSlackVerification;

@@ -11,20 +11,19 @@ const checkSlackVerification = require('../middleware/slackVerification')
 
 router.post("/goal", checkSlackVerification, async (req, res) => {
   const date = new Date();
-  const { user_id, text, channel_id } = req.body;
-
+  const { user_id, text } = req.body;
   try {
     await db.query(
-      `INSERT INTO goals (name, channel_id, goal, date)
-      VALUES ($1, $2, $3, $4)`,
-      [users[user_id], channel_id, text, date]
+      `INSERT INTO goals (name, goal, date)
+      VALUES ($1, $2, $3)`,
+      [users[user_id], text, date]
     )
 
     // Get this week's goals only. 
     const startOfWeek = moment().startOf('week').toDate();
     const result = await db.query(
       `SELECT name, goal FROM goals
-      WHERE date >=$1 AND channel_id=$2`, [startOfWeek, channel_id]
+      WHERE date >=$1`, [startOfWeek]
     )
 
     let goals = createGoalMarkdown(result.rows)
@@ -43,7 +42,7 @@ router.post("/goals", checkSlackVerification, async (req, res) => {
       WHERE date >=$1`, [startOfWeek]
     )
     let goals = createGoalMarkdown(result.rows)
-    goals["response_type"] = "in_channel"
+    // goals["response_type"] = "in_channel"
 
     res.send(goals)
   } catch (error) {
@@ -63,10 +62,10 @@ router.post("/problem", checkSlackVerification, async (req, res) => {
     let description = params.join(' ')
     
     await db.query(
-      `INSERT INTO problems (url, channel_id, description, added_by, date)
-      VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO problems (url, description, added_by, date)
+      VALUES ($1, $2, $3, $4)
       RETURNING url`,
-      [url, channel_id, description, users[user_id], date])
+      [url, description, users[user_id], date])
     
     return res.send(`Added ${url} to this week's problems.`)
   } catch (error) {
@@ -82,7 +81,7 @@ router.post("/problems", checkSlackVerification, async (req, res) => {
       WHERE date >=$1`, [startOfWeek]
     )
     let problems = createProblemMarkdown(result.rows)
-    problems["response_type"] = "in_channel"
+    // problems["response_type"] = "in_channel"
 
     res.send(problems)
   } catch (error) {
